@@ -27,6 +27,10 @@ pub struct ClientCredentials {
     // New console API requires SNI info to determine the cluster name.
     // Other Auth backends don't need it.
     pub sni_data: Option<String>,
+
+    // cluster_option is passed as argument from options from url.
+    // To be used to determine cluster name in case sni_data is missing.
+    pub cluster_option: Option<String>,
 }
 
 impl ClientCredentials {
@@ -48,11 +52,17 @@ impl TryFrom<HashMap<String, String>> for ClientCredentials {
 
         let user = get_param("user")?;
         let db = get_param("database")?;
+        let cluster = get_param("project");
+        let cluster_option = match cluster {
+            Ok(cluster) => Some(cluster),
+            Err(_) => None,
+        };
 
         Ok(Self {
             user,
             dbname: db,
             sni_data: None,
+            cluster_option,
         })
     }
 }

@@ -22,8 +22,8 @@ pub enum ConsoleAuthError {
     #[error("Bad client credentials: {0:?}")]
     BadCredentials(crate::auth::ClientCredentials),
 
-    #[error("SNI info is missing, please upgrade the postgres client library")]
-    SniMissing,
+    #[error("SNI info is missing. EITHER please upgrade the postgres client library OR pass ..&options=cluster:<project name>.. parameter")]
+    SniMissingAndProjectNameMissing,
 
     #[error("Unexpected SNI content")]
     SniWrong,
@@ -168,14 +168,22 @@ pub async fn handle_user(
     client: &mut PqStream<impl AsyncRead + AsyncWrite + Unpin>,
     creds: &ClientCredentials,
 ) -> Result<compute::NodeInfo, crate::auth::AuthError> {
-    // Determine cluster name from SNI.
-    let cluster = creds
-        .sni_data
-        .as_ref()
-        .ok_or(ConsoleAuthError::SniMissing)?
-        .split_once('.')
-        .ok_or(ConsoleAuthError::SniWrong)?
-        .0;
+    // Determine cluster name from SNI (creds.sni_data) or from creds.cluster_option.
+    let cluster = match &creds.sni_data {
+        //if sni_data exists, use it
+        Some(sni_data) => {
+            sni_data
+                .split_once('.')
+                .ok_or(ConsoleAuthError::SniWrong)?
+                .0
+        }
+        //otherwise use cluster_option if it was manually set thought ..&options=cluster:<name> parameter
+        None => creds
+            .cluster_option
+            .as_ref()
+            .ok_or(ConsoleAuthError::SniMissingAndProjectNameMissing)?
+            .as_str(),
+    };
 
     let user = creds.user.as_str();
 
