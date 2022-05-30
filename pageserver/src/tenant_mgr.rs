@@ -466,6 +466,8 @@ fn load_local_timeline(
     ));
     page_tline.init_logical_size()?;
 
+    // TODO make it debug
+    info!("load local timeline {timeline_id} send Attach to walreceiver");
     tenants_state::try_send_timeline_update(LocalTimelineUpdate::Attach(
         ZTenantTimelineId::new(repo.tenant_id(), timeline_id),
         Arc::clone(&page_tline),

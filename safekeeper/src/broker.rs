@@ -177,6 +177,8 @@ async fn push_loop(conf: SafeKeeperConf) -> anyhow::Result<()> {
             if let Some(tli) = GlobalTimelines::get_loaded(zttid) {
                 let sk_info = tli.get_public_info(&conf)?;
                 let put_opts = PutOptions::new().with_lease(lease.id());
+                // TODO make it debug
+                info!("Pushing state for {zttid} {sk_info:?}");
                 client
                     .put(
                         timeline_safekeeper_path(
