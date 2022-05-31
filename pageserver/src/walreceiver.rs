@@ -201,6 +201,7 @@ async fn wal_receiver_main_thread_loop_step<'a>(
                         WAL_RECEIVER_ENTRIES.write().await.remove(&id);
                     }
                 }
+
                 // Timeline got attached, retrieve all necessary information to start its broker loop and maintain this loop endlessly.
                 LocalTimelineUpdate::Attach(new_id, new_timeline) => {
                     let timelines = local_timeline_wal_receivers

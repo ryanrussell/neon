@@ -219,7 +219,7 @@ pub async fn subscribe_to_safekeeper_timeline_updates(
             "Failed to get messages from the subscription stream, kind: {subscription_kind:?}, error: {e}"
         )))? {
             if resp.canceled() {
-                info!("Watch for timeline updates subscription was canceled, exiting");
+                info!("Watch for updates subscription was canceled, exiting. Subscription: {:?}", &subscription_kind);
                 break;
             }
 
@@ -231,7 +231,7 @@ pub async fn subscribe_to_safekeeper_timeline_updates(
 
 
             let events = resp.events();
-            debug!("Processing {} events", events.len());
+            info!("Processing {} events", events.len());
 
             for event in events {
                 if EventType::Put == event.event_type() {

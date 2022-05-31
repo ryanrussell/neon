@@ -33,7 +33,7 @@ mod tenants_state {
         sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
     };
     use tokio::sync::mpsc;
-    use tracing::{debug, error};
+    use tracing::{debug, error, info};
 
     use utils::zid::ZTenantId;
 
@@ -70,6 +70,7 @@ mod tenants_state {
     }
 
     pub(super) fn try_send_timeline_update(update: LocalTimelineUpdate) {
+        info!("sending timeline update: {:?}", update);
         match TIMELINE_UPDATE_SENDER
             .read()
             .expect("Failed to read() timeline_update_sender lock, it got poisoned")
