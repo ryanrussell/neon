@@ -462,13 +462,16 @@ async fn timeline_wal_broker_loop_step(
             // finally, if no other tasks are completed, get another broker update and possibly reconnect
             updates = broker_subscription.fetch_data() => match updates {
                 Some(mut all_timeline_updates) => {
+                    info!("Got all_timeline_updates {:?}", all_timeline_updates);
                     if let Some(subscribed_timeline_updates) = all_timeline_updates.remove(&id) {
                         match wal_connection_manager.select_connection_candidate(subscribed_timeline_updates) {
                             Some(candidate) => {
                                 info!("Switching to different safekeeper {} for timeline {id}, reason: {:?}", candidate.safekeeper_id, candidate.reason);
                                 wal_connection_manager.change_connection(candidate.safekeeper_id, candidate.wal_producer_connstr).await;
                             },
-                            None => {}
+                            None => {
+                                info!("keeping current connection for timelne {id}")
+                            }
                         }
                     }
                 },
@@ -539,7 +542,10 @@ impl WalConnectionManager {
     async fn poll_connection_event_or_cancel(&mut self) -> ControlFlow<(), ()> {
         let (connection_data, wal_receiver_event) = match self.wal_connection_data.as_mut() {
             Some(connection_data) => match connection_data.connection.next_event().await {
-                Some(event) => (connection_data, event),
+                Some(event) => {
+                    info!("got wal connection event {:?}", event);
+                    (connection_data, event)
+                },
                 None => {
                     warn!("WAL receiver event source stopped sending messages, waiting for other events to arrive");
                     tokio::time::sleep(Duration::from_secs(30)).await;
